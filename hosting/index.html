@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <title>granblue.orbb.li</title>
+  
+  <script defer src="/__/firebase/6.3.3/firebase-app.js"></script>
+  <script defer src="/__/firebase/6.3.3/firebase-firestore.js"></script>
+  <script defer src="/__/firebase/6.3.3/firebase-database.js"></script>
+  <script defer src="/__/firebase/init.js"></script>
+
+  <!-- Font Awesome Icons -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" crossorigin="anonymous">
+  <!-- AdminLTE3 Theme style ref: https://adminlte.io/themes/v3/index3.html -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.0.5/css/adminlte.min.css" crossorigin="anonymous">
+  <!-- Google Font: Source Sans Pro -->
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet" crossorigin="anonymous">
+
+  <!-- Custom Page Styles -->
+	<style>
+    /*Hide vue elements when not finished loading*/
+		[v-cloak] { display: none; }
+	</style>
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="#" class="nav-link">granblue.orbb.li</a>
+      </li>
+    </ul>
+	<ul class="navbar-nav ml-auto">
+	  <li class="nav-item"> 
+	    <a class="nav-link" href="#"> Credit to: Carl Chan </a> 
+      </li> 
+	</ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="#" class="brand-link">
+      <img src="https://doujin-assets.dmm.co.jp/digital/comic/d_135009/d_135009pt.jpg" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
+           style="opacity: .8">
+      <span class="brand-text font-weight-light">Granblue</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul id="navbar" class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false" v-cloak>
+          <!-- Add icons to the links using the .nav-icon class
+               with font-awesome or any other icon font library -->
+          <!-- use vue to dynamically generate items by "v-for" loop-->
+          <li class="nav-header">Charts</li>
+          <li class="nav-item has-treeview" v-for='(value, key) in history'>
+            <a href="#" class="nav-link" :title="GetMonth(value)">
+              <i class="nav-icon fas fa-chart-bar"></i>
+              <p>
+                {{GetTitle(key, value)}}
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <!-- Drow down items -->
+            <ul class="nav nav-treeview">
+              <!-- CrewSearch button -->
+              <li class="nav-item">
+                <a href="#" class="nav-link" v-on:click="LoadCrewSearchGraph(key.slice(-2))">
+                  <i class="fas fa-search nav-icon"></i>
+                  <p>CrewSearch</p>
+                </a>
+              </li>
+              <li class="nav-header pt-2">Personal Borders:</li>
+              <!-- use vue to dynamically generate sub-items by "v-for" loop -->
+              <li class="nav-item" v-for='i in GetIndex(value)'>
+                <a href="#" class="nav-link" @click="LoadPersonalBorderGraph(key.slice(-2),i[0])">
+                  <i class="nav-icon far fa-circle"></i>
+                  <p>{{GetDate(value,i[0])}} {{i[1]}}</p>
+                </a>
+              </li>
+            </ul>
+            <!-- /.Drow down items -->
+          </li>
+          <!--/.auto-generated menu items-->
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">公會戰!!!!! - 決戰！猩之股戰場</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Chart Page</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+    
+    <!-- Main content -->
+    <div class="content">
+      <div class="container-fluid">
+        <!-- Chart 1 -->
+        <div class="pborder card">
+          <div class="card-body">
+            <div class="container">
+              <canvas id="pborderdata"></canvas>
+            </div>
+          </div>
+        </div>
+        <!-- /.Chart 1 -->
+        <!-- Chart 2 -->
+        <div class="pborder card">
+          <div class="card-body">
+            <div class="container">
+              <canvas id="pborderdatadiff"></canvas>
+            </div>
+          </div>
+        </div>
+        <!-- /.Chart 2 -->
+        <!-- Crew Search Box -->
+        <div class="crewsearch card">
+          <div class="card-header">Crew Search</div>
+          <div class="card-body">
+            <div class="container">
+              <form onsubmit="GetCrewData()">
+                <div class="form-group">
+                  <input type="hidden" name="raid" value="46">
+                  <label for="crew_id">Crew id:</label>
+                  <input type="text" class="form-control" name="crew_id" placeholder="Enter crew id">
+                </div>
+                <button type="submit" class="btn btn-default">Submit</button>
+              </form>
+              <canvas id="crew"></canvas>
+            </p>
+          </div>
+        </div>
+        <!-- /.Crew Search Box -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+</div>
+<!-- /.wrapper -->
+
+
+<!-- ==== Javascript Libraries ==== -->
+<!-- Firebase Database Library -->
+<script src="https://www.gstatic.com/firebasejs/6.3.3/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/6.3.3/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/6.3.3/firebase-database.js"></script>
+<script>
+  if (typeof firebase === 'undefined') throw new Error('hosting/init-error: Firebase SDK not detected. You must include it before /__/firebase/init.js');
+  firebase.initializeApp({
+    "apiKey": "AIzaSyB6aYzlNXv6zaB-H8bpXI4jKzqkogpBgVY",
+    "appId": "1:964139672422:web:e63d32653425d1e6",
+    "databaseURL": "https://granblue-247222.firebaseio.com",
+    "storageBucket": "granblue-247222.appspot.com",
+    "authDomain": "granblue-247222.firebaseapp.com",
+    "messagingSenderId": "964139672422",
+    "projectId": "granblue-247222"
+  });
+</script>
+
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js" crossorigin="anonymous"></script>
+<!-- AdminLTE App -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.0.5/js/adminlte.min.js" crossorigin="anonymous"></script>
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js" integrity="sha256-XF29CBwU1MWLaGEnsELogU6Y6rcc5nCkhhx89nFMIDQ=" crossorigin="anonymous"></script>
+<!-- Vue -->
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<!-- moment.js for time convertion -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+<!-- /.==== Javascript Libraries ==== -->
+
+
+<!-- ==== CUSTOM JAVASCRIPT FUNCTIONS ==== -->
+
+<!-- Custom data processing functions -->
+<script id="ly-library">
+	function GetMonth(historyObject) {
+		d = new Date(historyObject.date[0].seconds*1000)
+		return (1900 + d.getYear()) + (""+(d.getMonth()+1)).padStart(2,'0')
+	}
+	function GetTitle(historyKey, historyObject) {
+		return historyKey.slice(-2) + historyObject.element
+	}
+	function GetIndex(historyObject) {
+		dStart = new Date(historyObject.date[0].seconds*1000)
+		dEnd = new Date(historyObject.date[1].seconds*1000)
+		rt = [
+			[-1, "Pre"],
+			[0, "Interval"],
+			[1, "Day1"],
+			[2, "Day2"],
+			[3, "Day3"],
+			[4, "Day4"]
+		]
+		if (dEnd - dStart == 604800000) rt.push([5, "Day5"])
+		return rt
+	}
+	function GetDate(historyObject, day) {
+		dStart = new Date(historyObject.date[0].seconds*1000)
+		if (day == -1)
+			return dStart.toLyDate()
+		else {
+			dStart.setDate(dStart.getDate() + 2 + day)
+			return dStart.toLyDate()
+		}
+	}
+	Date.prototype.addDays = function (days) {
+		return new Date(this.valueOf() + days * 86400e3);
+	}
+	Date.prototype.addHours = function (days) {
+		return new Date(this.valueOf() + days * 3600e3);
+	}
+	Date.prototype.addMinutes = function (days) {
+		return new Date(this.valueOf() + days * 60e3);
+	}
+	Date.prototype.toLyDate = function () {
+		return (""+this.getYear()).slice(-2) + (""+(this.getMonth()+1)).padStart(2,'0') + (""+(this.getDate()+1)).padStart(2,'0')
+	}
+	Date.prototype.toLyTime = function () {
+		return (""+this.getHours()).padStart(2,'0') + (""+this.getMinutes()).padStart(2,'0') + (""+this.getSeconds()).padStart(2,'0')
+	}
+	Date.prototype.toLyDatetime = function() {
+		return this.toLyDate() + this.toLyTime()
+	}
+	Date.prototype.between = function(startDate, endDate) {
+		return (startDate <= this) && (this <= endDate)
+	}
+	function GetDateTimeInRaid(raid, date){
+		key = "teamraid" + raid.padStart(3,'0')
+		raidStartDate = new Date(historicalData[key].date[0].seconds*1000)
+		switch(date){
+			case -1:
+				start = raidStartDate.addHours(18)
+				end = raidStartDate.addDays(1).addHours(23).addMinutes(59)
+				return [start, end]
+			case 0:
+				start = raidStartDate.addDays(2).addHours(7)
+				end = raidStartDate.addDays(3).addHours(6).addMinutes(59)
+				return [start, end]
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+				start = raidStartDate.addDays(2 + date).addHours(7)
+				end = raidStartDate.addDays(2 + date).addHours(23).addMinutes(59)
+				return [start, end]
+			default:
+				return "bad"
+		}
+	}
+	function CreateTimeframe(raid, day){
+		startend = GetDateTimeInRaid(raid, day)
+		current = startend[0]
+		rt = []
+		for (current = startend[0]; current < startend[1]; current = current.addMinutes(20)) {
+			rt.push(current)
+		}
+		return rt
+	}
+	function transpose(a) {
+		var w = a.length || 0;
+		var h = a[0] instanceof Array ? a[0].length : 0;
+		if(h === 0 || w === 0) { return []; }
+		var i, j, t = [];
+		for(i=0; i<h; i++) {
+			t[i] = [];
+			for(j=0; j<w; j++) {
+				t[i][j] = a[j][i] == "" ? null : a[j][i];
+			}
+		}
+		return t;
+	}
+</script>
+
+<!-- Chart.js Settings -->
+<script id="graph-render">
+var pborderdata, pborderdatadiff, crewdatadiff;
+var colors=['rgb(255,99,132)','rgb(255,159,64)','rgb(255,205,86)','rgb(75,192,192)'];
+function GraphConfig(title, xlabel, ylabel, datalabel, datasets){
+	return {
+		type: 'line',
+		data: {
+			labels: datalabel,
+			datasets: datasets
+		},
+		options: {
+			responsive: true,
+			title: {
+				display: true,
+				text: title
+			},
+			tooltips: {
+				mode: 'index',
+				intersect: false,
+			},
+			hover: {
+				mode: 'nearest',
+				intersect: true
+			},
+			scales: {
+				xAxes: [{
+					display: true,
+					scaleLabel: {
+						display: true,
+						labelString: xlabel
+					}
+				}],
+				yAxes: [{
+					display: true,
+					scaleLabel: {
+						display: true,
+						labelString: ylabel
+					}
+				}]
+			}
+		}
+	};
+}
+function LoadPersonalBorderGraph(raid, day) {
+		raidString = "teamraid"+raid.padStart(3,'0')
+		db.collection('personal_border').doc(raidString).get().then((doc)=>{
+			data = doc.data()['records'].reduce((t,e)=>{
+				thisDateTime = new Date(e.datetime.seconds*1000)
+				return t.map((v)=>{
+					if (thisDateTime.between(v[0], v[0].addMinutes(20))) {
+						return [v[0]].concat(historicalData[raidString].border.map((b)=>e[b]))
+					} else return v
+				})
+			},CreateTimeframe(raid,day).map((e)=>[e].concat(Array.from({length:4}))))
+			datat = transpose(data)
+			dataLabel = datat[0].map((e)=>e.toLyTime())
+			dataSet = []
+			dataSetDiff = []
+			for (i=0; i<4; i++) {
+				dataSet.push({
+					label: historicalData[raidString].border[i],
+					backgroundColor: colors[i],
+					borderColor: colors[i],
+					data: datat[i+1],
+					fill: false,
+				})
+				dataSetDiff.push({
+					label: historicalData[raidString].border[i],
+					backgroundColor: colors[i],
+					borderColor: colors[i],
+					data: datat[i+1].map((v,j,a)=>{
+						if (a[j]==null||a[j-1]==null) return null
+						return a[j]-a[j-1]
+					}),
+					fill: false,
+				})
+			}
+			$('.pborder').show();
+			$('.crewsearch').hide();
+			if (pborderdata != null) pborderdata.destroy();
+			if (pborderdatadiff != null) pborderdatadiff.destroy();
+			pborderdata = new Chart(
+				$('#pborderdata')[0].getContext('2d'),
+				GraphConfig(raid+"th "+day+" day personal border", "Time", "Contribution", dataLabel, dataSet)
+			);
+			pborderdatadiff = new Chart(
+				$('#pborderdatadiff')[0].getContext('2d'),
+				GraphConfig(raid+"th "+day+' day personal border 20m speed', 'Time', 'Contribution 20m speed', dataLabel, dataSetDiff)
+			);
+		})
+}
+function LoadCrewSearchGraph(raid) {
+	$('#bookmaker').hide();
+	$('.pborder').hide();
+	$('.crewsearch').show();
+	$('form input[name=raid]')[0].value = raid;
+}
+function GetCrewData() {
+	raid = $('form input[name=raid]')[0].value
+	crew_id = $('form input[name=crew_id]')[0].value
+	raidString = "teamraid" + raid.padStart(3,'0')
+	db.collection('crew').doc(crew_id).collection('records').doc(raidString).get().then((doc)=>{
+		data = doc.data()['records'].reduce((t,e)=>{
+			thisDateTime = new Date(e.datetime.seconds*1000)
+			return t.map((day)=>{
+				return day.map((row)=>{
+					if (thisDateTime.between(row[0], row[0].addMinutes(20))) {
+						return [row[0], e.point]
+					} else {
+						return row
+					}
+				})
+			})
+		},Array.from({length:4},(x,i)=>i+1).map((e)=>CreateTimeframe(raid,e).map((x)=>[x,null])))
+		dataSetDiff = []
+		header = transpose(data[0])[0].map((e)=>e.toLyTime())
+		for (i=0; i<4; i++) {
+			datat = transpose(data[i])
+			dataSetDiff.push({
+				label: "Day" + (i+1),
+				backgroundColor: colors[i],
+				borderColor: colors[i],
+				data: datat[1].map((v,j,a)=>{
+					if (a[j]==null||a[j-1]==null) return null
+					return a[j]-a[j-1]
+				}),
+				fill: false
+			})
+		}
+		if (crewdatadiff != null) crewdatadiff.destroy();
+		crewdatadiff = new Chart(
+			$('#crew')[0].getContext('2d'),
+			GraphConfig('Day1 - Day4 speed', 'Time', 'Contribution 20m speed', header, dataSetDiff)
+		);
+	})
+}
+</script>
+
+<!-- Page init functions & event listerners -->
+<script id="init-page">
+	$('form').submit((e)=>e.preventDefault())
+	var historicalData, db;
+	$('.pborder').hide();
+	$('.crewsearch').hide();
+	document.addEventListener('DOMContentLoaded', function() {
+		try {
+			let app = firebase.app();
+		} catch (e) {
+			console.error(e);
+		}
+		db = firebase.firestore();
+		//Generate Nav Bar Items from firebase data
+		db.collection('configs').doc('history').get().then((doc) => {
+      console.log('History loaded.')
+			historicalData = Object.entries(doc.data()).reverse().reduce((a,c)=>{a[c[0]]=c[1]; return a}, {});
+			app = new Vue({el: '#navbar', data: {history: historicalData}})
+			// $('.dropdown-submenu > a').on("click", function(e){
+			// 	$(this).next('ul').toggle();
+			// 	e.stopPropagation();
+			// 	e.preventDefault();
+			// })
+			db.collection('configs').doc('config').get().then((cfg) => {
+				newestRaid = cfg.data()['teamraid'].slice(-2)
+				today = Array.from({length:6},(x,i)=>[4-i,GetDateTimeInRaid(newestRaid,4-i)[0]]).find((e)=>(e[1]<new Date()))
+				LoadPersonalBorderGraph(newestRaid, today[0])
+			})
+		});
+	});
+</script>
+
+<!-- /.==== CUSTOM JAVASCRIPT FUNCTIONS ==== -->
+
+</body>
+</html>
