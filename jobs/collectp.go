@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	personalRanks []int = append([]int{2000}, util.IntSlice(5000, 250000, 5000)...)
+	personalRanks []int = append([]int{2000}, util.IntSlice(5000, 300000, 5000)...)
 )
 
 func CollectP(t time.Time) error {
