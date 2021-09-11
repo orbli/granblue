@@ -197,7 +197,16 @@
 	}
 	function GetIndex(historyObject) {
 		dStart = new Date(historyObject.date[0].seconds*1000)
-		dEnd = new Date(historyObject.date[1].seconds*1000)
+        dEnd = new Date(historyObject.date[1].seconds*1000)
+        if (historyObject.date[0].seconds*1000 == 1631113307000) {
+            return rt = [
+                [-1, "Pre"],
+                [1, "Day1"],
+                [2, "Day2"],
+                [3, "Day3"],
+                [4, "Day4"]
+            ]
+        }
 		rt = [
 			[-1, "Pre"],
 			[0, "Interval"],
@@ -241,7 +250,7 @@
 	}
 	function GetDateTimeInRaid(raid, date){
 		key = "teamraid" + raid.padStart(3,'0')
-		raidStartDate = new Date(historicalData[key].date[0].seconds*1000)
+        raidStartDate = new Date(historicalData[key].date[0].seconds*1000)
 		switch(date){
 			case -1:
 				start = raidStartDate.addHours(18)
@@ -256,8 +265,13 @@
 			case 3:
 			case 4:
 			case 5:
-				start = raidStartDate.addDays(2 + date).addHours(7)
-				end = raidStartDate.addDays(2 + date).addHours(23).addMinutes(59)
+                if (key == "teamraid058") {
+                    start = raidStartDate.addDays(1 + date).addHours(7)
+                    end = raidStartDate.addDays(1 + date).addHours(23).addMinutes(59)
+                } else {
+                    start = raidStartDate.addDays(2 + date).addHours(7)
+                    end = raidStartDate.addDays(2 + date).addHours(23).addMinutes(59)
+                }
 				return [start, end]
 			default:
 				return "bad"
